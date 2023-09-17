@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- COMMON TAGS -->
+    <meta charset="utf-8">
+    <title>Contador de Batata</title>
+    <!-- Search Engine -->
+    <meta name="description" content="Quem ganha mais argumentos em uma semana? O perdedor devera pagar uma batata no Domingo.">
+    <meta name="image" content="https://i.imgur.com/E68WOxV.png">
+    <!-- Schema.org for Google -->
+    <meta itemprop="name" content="Contador de Batata">
+    <meta itemprop="description" content="Quem ganha mais argumentos em uma semana? O perdedor devera pagar uma batata no Domingo.">
+    <meta itemprop="image" content="https://i.imgur.com/E68WOxV.png">
+    <!-- Open Graph general (Facebook, Pinterest & Google+) -->
+    <meta name="og:title" content="Contador de Batata">
+    <meta name="og:description" content="Quem ganha mais argumentos em uma semana? O perdedor devera pagar uma batata no Domingo.">
+    <meta name="og:image" content="https://i.imgur.com/E68WOxV.png">
+    <meta name="og:url" content="https://argumentos.roda.directory">
+    <meta name="og:site_name" content="Contador de Batata">
+    <meta name="og:locale" content="pt_br">
+    <meta name="og:type" content="website">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+
+    <link rel="shortcut icon" type="image/png" href="favicon.png" />
+
+    <script src="https://www.gstatic.com/firebasejs/5.8.4/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.4/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.8.4/firebase-auth.js"></script>
+    <script>
+        // Initialize Firebase
+        var config = {
+            apiKey: "AIzaSyDVh0uY0smQNZyV_m0ahoPwEbKJQbgXtRM",
+            authDomain: "chatebote.firebaseapp.com",
+            databaseURL: "https://chatebote.firebaseio.com",
+            projectId: "chatebote",
+            storageBucket: "chatebote.appspot.com",
+            messagingSenderId: "686074822810"
+        };
+        firebase.initializeApp(config);
+        var db = firebase.firestore();
+    </script>
+
+    <script src="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.css" />
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css?family=Montserrat|Raleway" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/index.css">
+
+</head>
+
+<body>
+    <div class="top-bar">
+        <div class="wrapper">
+            <div class="botao-login"></div>
+            <div class="titulo">Keeping Score</div>
+        </div>
+    </div>
+
+    <div id="corpo" class="corpo">
+        <div id="pontos-a" class="pontos">
+            <div class="pontos-nome">Alice</div>
+            <div class="pontos-quant">0</div>
+            <div class="pontos-botoes">
+                <div class="botao" onclick="sub('alice')">
+                    <i class="material-icons">remove</i>
+                </div>
+                <div class="botao" onclick="add('alice')">
+                    <i class="material-icons">add</i>
+                </div>
+            </div>
+        </div>
+
+        <div id="pontos-g" class="pontos">
+            <div class="pontos-nome">Gabriel</div>
+            <div class="pontos-quant">0</div>
+            <div class="pontos-botoes">
+                <div class="botao" onclick="sub('gabriel')">
+                    <i class="material-icons">remove</i>
+                </div>
+                <div class="botao" onclick="add('gabriel')">
+                    <i class="material-icons">add</i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-bar">
+        A disputa está acirrada.
+    </div>
+
+</body>
+
+<script>
+    var alicep = 0;
+    var gabrielp = 0;
+
+    function sendMensagem() {
+        let txt = document.querySelector('#mensagem-texto');
+
+        var user = firebase.auth().currentUser;
+
+
+        db.collection('mensagens').add({
+            autor: user ? user.displayName : "Anonimo",
+            texto: txt.value
+        });
+
+        txt.value = '';
+    }
+
+    function add(whom) {
+        let user = firebase.auth().currentUser;
+
+        if (user) {
+
+            db.collection('arg_log').add({
+                action: '+1',
+                author: user.displayName,
+                date: new Date(),
+                target: whom
+            })
+
+            if (whom === 'gabriel') {
+                gabrielp++;
+                db.collection('argumentos').doc('score').set({
+                    'gabriel': gabrielp
+                }, {
+                    merge: true
+                })
+            }
+            if (whom === 'alice') {
+                alicep++;
+                db.collection('argumentos').doc('score').set({
+                    'alice': alicep
+                }, {
+                    merge: true
+                })
+            }
+        }
+    }
+
+    function sub(whom) {
+        let user = firebase.auth().currentUser;
+
+        if (user) {
+
+            db.collection('arg_log').add({
+                action: '-1',
+                author: user.displayName,
+                date: new Date(),
+                target: whom
+            })
+
+            if (whom === 'gabriel') {
+                gabrielp--;
+                db.collection('argumentos').doc('score').set({
+                    'gabriel': gabrielp
+                }, {
+                    merge: true
+                })
+            }
+            if (whom === 'alice') {
+                alicep--;
+                db.collection('argumentos').doc('score').set({
+                    'alice': alicep
+                }, {
+                    merge: true
+                })
+            }
+        }
+    }
+
+    var ui = new firebaseui.auth.AuthUI(firebase.auth());
+    ui.start('.botao-login', {
+        signInOptions: [
+            firebase.auth.GoogleAuthProvider.PROVIDER_ID
+        ]
+    });
+
+    firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+            // User is signed in.
+            //esconder botao login
+            document.querySelector('.botao-login').style.display = 'none';
+            document.querySelector('.titulo').style.display = 'block';
+
+            db.collection("argumentos").doc('score').onSnapshot(function(doc) {
+                let gp = doc.data().gabriel;
+                let ap = doc.data().alice;
+
+                document.querySelector('#pontos-a').querySelector('.pontos-quant').innerHTML = ap
+                alicep = ap;
+
+                document.querySelector('#pontos-g').querySelector('.pontos-quant').innerHTML = gp;
+                gabrielp = gp;
+
+                if (gp > ap) {
+                    document.querySelector('.bottom-bar').innerHTML = 'Ao que tudo indica o Gabriel não precisa pagar a batata.';
+                } else if (gp == ap) {
+                    document.querySelector('.bottom-bar').innerHTML = 'A disputa está acirrada não é mesmo?';
+
+                } else {
+                    document.querySelector('.bottom-bar').innerHTML = 'Ao que tudo indica a Alice não precisa pagar a batata.';
+
+                }
+
+            });
+        } else {
+            // No user is signed in.
+        }
+    });
+</script>
+
+</html>
